@@ -80,12 +80,10 @@ Instance.new("UICorner",VIntBtn).CornerRadius=UDim.new(0,8)
 local VIntS=Instance.new("UIStroke",VIntBtn)
 VIntS.Color=Color3.fromRGB(255,0,200)
 VIntS.Thickness=1.5
-
 VExtBtn.MouseEnter:Connect(function()T:Create(VExtBtn,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(35,45,70)}):Play()end)
 VExtBtn.MouseLeave:Connect(function()T:Create(VExtBtn,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(20,25,40)}):Play()end)
 VIntBtn.MouseEnter:Connect(function()T:Create(VIntBtn,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(50,25,80)}):Play()end)
 VIntBtn.MouseLeave:Connect(function()T:Create(VIntBtn,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(25,18,40)}):Play()end)
-
 local function buildMenu(mode)
 	vsg:Destroy()
 	local isInt=(mode=="internal")
@@ -131,7 +129,6 @@ local function buildMenu(mode)
 		end
 	end)
 	Xb.MouseButton1Click:Connect(function()sg:Destroy()end)
-	
 	local tabContents={}
 	local tabBtns={}
 	local function makeTab(name,ord)
@@ -193,314 +190,341 @@ local function buildMenu(mode)
 		local l=Instance.new("TextLabel",parent)
 		l.Size=UDim2.new(1,0,0,16)l.BackgroundTransparency=1 l.Text="▬ "..txt
 		l.TextColor3=c l.Font=Enum.Font.GothamBold l.TextSize=9 l.TextXAlignment=Enum.TextXAlignment.Left l.LayoutOrder=ord
+	endlocal asA,asC=false,nil
+local gmC,kaC,faC=nil,nil,nil
+local fbBV,fbBG=nil,nil
+local fbActive=false
+local function getMM2Role(pl)
+	if pl.Backpack:FindFirstChild("Knife") or (pl.Character and pl.Character:FindFirstChild("Knife")) then return "Murderer" end
+	if pl.Backpack:FindFirstChild("Gun") or (pl.Character and pl.Character:FindFirstChild("Gun")) then return "Sheriff" end
+	return "Innocent"
+end
+local function getMurderer()
+	for _,pl in ipairs(P:GetPlayers())do
+		if pl~=LP and getMM2Role(pl)=="Murderer" then return pl end
 	end
-	local asA,asC=false,nil
-	local gmC,kaC,faC=nil,nil,nil
-	local fbBV,fbBG=nil,nil
-	local fbActive=false
-	local function getMM2Role(pl)
-		if pl.Backpack:FindFirstChild("Knife") or (pl.Character and pl.Character:FindFirstChild("Knife")) then return "Murderer" end
-		if pl.Backpack:FindFirstChild("Gun") or (pl.Character and pl.Character:FindFirstChild("Gun")) then return "Sheriff" end
-		return "Innocent"
+	return nil
+end
+local function getSheriff()
+	for _,pl in ipairs(P:GetPlayers())do
+		if pl~=LP and getMM2Role(pl)=="Sheriff" then return pl end
 	end
-	local function getMurderer()
-		for _,pl in ipairs(P:GetPlayers())do
-			if pl~=LP and getMM2Role(pl)=="Murderer" then return pl end
+	return nil
+end
+local mm2A=false
+local mm2C={}
+local mm2D={}
+local function applyESP(pl)
+	if pl==LP then return end
+	local function apply(char)
+		if not mm2A or not char then return end
+		local hl=char:FindFirstChild("ExodiumESP")
+		if not hl then
+			hl=Instance.new("Highlight",char)
+			hl.Name="ExodiumESP"
+			hl.OutlineTransparency=1
+			hl.FillTransparency=0.5
+			hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
 		end
-		return nil
+		local role=getMM2Role(pl)
+		if role=="Murderer" then hl.FillColor=Color3.fromRGB(255,0,0)
+		elseif role=="Sheriff" then hl.FillColor=Color3.fromRGB(0,0,255)
+		else hl.FillColor=Color3.fromRGB(0,255,0) end
+		mm2D[pl]=hl
 	end
-	local function getSheriff()
-		for _,pl in ipairs(P:GetPlayers())do
-			if pl~=LP and getMM2Role(pl)=="Sheriff" then return pl end
-		end
-		return nil
-	end
-	local mm2A=false
-	local mm2C={}
-	local mm2D={}
-	local function applyESP(pl)
-		if pl==LP then return end
-		local function apply(char)
-			if not mm2A or not char then return end
-			local hl=char:FindFirstChild("ExodiumESP")
-			if not hl then
-				hl=Instance.new("Highlight",char)
-				hl.Name="ExodiumESP"
-				hl.OutlineTransparency=1
-				hl.FillTransparency=0.5
-				hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+	if pl.Character then apply(pl.Character)end
+	table.insert(mm2C,pl.CharacterAdded:Connect(function(c)task.wait(0.5)if mm2A then apply(c)end end))
+end
+local function sMM2()
+	if mm2A then return end
+	mm2A=true
+	for _,pl in ipairs(P:GetPlayers())do applyESP(pl)end
+	table.insert(mm2C,P.PlayerAdded:Connect(applyESP))
+	table.insert(mm2C,R.Heartbeat:Connect(function()
+		if not mm2A then return end
+		for pl,hl in pairs(mm2D)do
+			if hl and hl.Parent and pl.Character then
+				local role=getMM2Role(pl)
+				if role=="Murderer" then hl.FillColor=Color3.fromRGB(255,0,0)
+				elseif role=="Sheriff" then hl.FillColor=Color3.fromRGB(0,0,255)
+				else hl.FillColor=Color3.fromRGB(0,255,0) end
 			end
-			local role=getMM2Role(pl)
-			if role=="Murderer" then hl.FillColor=Color3.fromRGB(255,0,0)
-			elseif role=="Sheriff" then hl.FillColor=Color3.fromRGB(0,0,255)
-			else hl.FillColor=Color3.fromRGB(0,255,0) end
-			mm2D[pl]=hl
 		end
-		if pl.Character then apply(pl.Character)end
-		table.insert(mm2C,pl.CharacterAdded:Connect(function(c)task.wait(0.5)if mm2A then apply(c)end end))
-	end
-	local function sMM2()
-		if mm2A then return end
-		mm2A=true
-		for _,pl in ipairs(P:GetPlayers())do applyESP(pl)end
-		table.insert(mm2C,P.PlayerAdded:Connect(applyESP))
-		table.insert(mm2C,R.Heartbeat:Connect(function()
-			if not mm2A then return end
-			for pl,hl in pairs(mm2D)do
-				if hl and hl.Parent and pl.Character then
-					local role=getMM2Role(pl)
-					if role=="Murderer" then hl.FillColor=Color3.fromRGB(255,0,0)
-					elseif role=="Sheriff" then hl.FillColor=Color3.fromRGB(0,0,255)
-					else hl.FillColor=Color3.fromRGB(0,255,0) end
-				end
-			end
-		end))
-	end
-	local function eMM2()
-		mm2A=false
-		for _,hl in pairs(mm2D)do if hl and hl.Parent then hl:Destroy()end end
-		mm2D={}
-		for _,cn in ipairs(mm2C)do cn:Disconnect()end
-		mm2C={}
-	end
-	local aaA=false
-	local aaC
-	local function sAA()
-		if aaA then return end
-		aaA=true
-		aaC=R.Heartbeat:Connect(function()
-			local r=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-			if r then r.CFrame=r.CFrame*CFrame.Angles(0,math.rad(AIM_SPEED),0)end
-		end)
-	end
-	local function eAA()aaA=false if aaC then aaC:Disconnect()aaC=nil end end
-	local abA=false
-	local abC
-	local function sAB()
-		if abA then return end
-		abA=true
-		abC=R.RenderStepped:Connect(function()
-			local cam=W.CurrentCamera
-			if not cam then return end
-			local murderer=getMurderer()
-			if not murderer or not murderer.Character then return end
-			local head=murderer.Character:FindFirstChild("Head")
-			local myChar=LP.Character
-			local myHead=myChar and myChar:FindFirstChild("Head")
-			if not head or not myHead then return end
-			local params=RaycastParams.new()
-			params.FilterType=Enum.RaycastFilterType.Exclude
-			params.FilterDescendantsInstances={myChar,murderer.Character}
-			local res=W:Raycast(myHead.Position,head.Position-myHead.Position,params)
-			if res then return end
-			cam.CFrame=CFrame.new(cam.CFrame.Position,head.Position)
-		end)
-	end
-	local function eAB()abA=false if abC then abC:Disconnect()abC=nil end end
-	local atpA=false
-	local atpC
-	local function sATP()
-		if atpA then return end
-		atpA=true
-		atpC=R.Heartbeat:Connect(function()
-			local char=LP.Character
-			local root=char and char:FindFirstChild("HumanoidRootPart")
-			if not root then return end
-			for _,obj in ipairs(W:GetDescendants())do
-				if obj:IsA("Tool")then
-					local n=obj.Name:lower()
-					if n=="gun" or n=="revolver" or n=="pistol" then
-						local handle=obj:FindFirstChild("Handle")
-						if handle and handle.Parent then
-							local parent=obj.Parent
-							if parent and not parent:IsA("Backpack") and not parent:FindFirstChildOfClass("Humanoid") then
-								root.CFrame=CFrame.new(handle.Position+Vector3.new(0,3,0))
-								break
-							end
+	end))
+end
+local function eMM2()
+	mm2A=false
+	for _,hl in pairs(mm2D)do if hl and hl.Parent then hl:Destroy()end end
+	mm2D={}
+	for _,cn in ipairs(mm2C)do cn:Disconnect()end
+	mm2C={}
+end
+local aaA=false
+local aaC
+local function sAA()
+	if aaA then return end
+	aaA=true
+	aaC=R.Heartbeat:Connect(function()
+		local r=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+		if r then r.CFrame=r.CFrame*CFrame.Angles(0,math.rad(AIM_SPEED),0)end
+	end)
+end
+local function eAA()aaA=false if aaC then aaC:Disconnect()aaC=nil end end
+local abA=false
+local abC
+local function sAB()
+	if abA then return end
+	abA=true
+	abC=R.RenderStepped:Connect(function()
+		local cam=W.CurrentCamera
+		if not cam then return end
+		local murderer=getMurderer()
+		if not murderer or not murderer.Character then return end
+		local head=murderer.Character:FindFirstChild("Head")
+		local myChar=LP.Character
+		local myHead=myChar and myChar:FindFirstChild("Head")
+		if not head or not myHead then return end
+		local params=RaycastParams.new()
+		params.FilterType=Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances={myChar,murderer.Character}
+		local res=W:Raycast(myHead.Position,head.Position-myHead.Position,params)
+		if res then return end
+		cam.CFrame=CFrame.new(cam.CFrame.Position,head.Position)
+	end)
+end
+local function eAB()abA=false if abC then abC:Disconnect()abC=nil end end
+local atpA=false
+local atpC
+local function sATP()
+	if atpA then return end
+	atpA=true
+	atpC=R.Heartbeat:Connect(function()
+		local char=LP.Character
+		local root=char and char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+		for _,obj in ipairs(W:GetDescendants())do
+			if obj:IsA("Tool")then
+				local n=obj.Name:lower()
+				if n=="gun" or n=="revolver" or n=="pistol" then
+					local handle=obj:FindFirstChild("Handle")
+					if handle and handle.Parent then
+						local parent=obj.Parent
+						if parent and not parent:IsA("Backpack") and not parent:FindFirstChildOfClass("Humanoid") then
+							root.CFrame=CFrame.new(handle.Position+Vector3.new(0,3,0))
+							break
 						end
 					end
 				end
 			end
-		end)
-	end
-	local function eATP()atpA=false if atpC then atpC:Disconnect()atpC=nil end end
-	local atmA=false
-	local atmC
-	local function sATM()
-		if atmA then return end
-		atmA=true
-		atmC=R.Heartbeat:Connect(function()
-			local murderer=getMurderer()
-			local mr=murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart")
-			local myRoot=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-			if mr and myRoot then myRoot.CFrame=CFrame.new(mr.Position+Vector3.new(0,0,3))end
-		end)
-	end
-	local function eATM()atmA=false if atmC then atmC:Disconnect()atmC=nil end end
-	local shotA=false
-	local shotGui=nil
-	local lastShot=0
-	local function makeShot()
-		if shotGui then shotGui:Destroy()end
-		shotGui=Instance.new("ScreenGui",pg)
-		shotGui.Name="ExodiumShot"shotGui.ResetOnSpawn=false shotGui.IgnoreGuiInset=true shotGui.DisplayOrder=200
-		local btn=Instance.new("TextButton",shotGui)
-		btn.Size=UDim2.new(0,60,0,60)btn.Position=UDim2.new(0.85,0,0.7,0)
-		btn.BackgroundColor3=Color3.fromRGB(20,15,30)btn.BorderSizePixel=0 btn.Text=""btn.AutoButtonColor=false
-		Instance.new("UICorner",btn).CornerRadius=UDim.new(0,10)
-		local stk=Instance.new("UIStroke",btn)stk.Color=mainColor stk.Thickness=2 stk.Transparency=0.2
-		local ic=Instance.new("TextLabel",btn)ic.Size=UDim2.new(1,0,1,0)ic.BackgroundTransparency=1 ic.Text="🔫"ic.TextScaled=true ic.Font=Enum.Font.GothamBold
-		local dg=false
-		local ds2,sp2
-		btn.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dg=true ds2=i.Position sp2=btn.Position end end)
-		U.InputChanged:Connect(function(i)if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then local d=i.Position-ds2 if math.abs(d.X)>5 or math.abs(d.Y)>5 then btn.Position=UDim2.new(sp2.X.Scale,sp2.X.Offset+d.X,sp2.Y.Scale,sp2.Y.Offset+d.Y)end end end)
-		U.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dg=false end end)
-		btn.MouseButton1Click:Connect(function()
-			if not shotA then return end
-			local now=tick()
-			if now-lastShot<SHOT_DELAY then return end
-			lastShot=now
-			T:Create(btn,TweenInfo.new(0.1),{BackgroundColor3=mainColor}):Play()
-			task.wait(0.15)
-			T:Create(btn,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(20,15,30)}):Play()
-			local myChar=LP.Character
-			if not myChar then return end
-			local gun=myChar:FindFirstChild("Gun")
-			if not gun then local bp=LP:FindFirstChild("Backpack")if bp then gun=bp:FindFirstChild("Gun")end end
-			if gun then pc(function()gun:Activate()end)end
-		end)
-	end
-	local function sShot()if shotA then return end shotA=true makeShot()end
-	local function eShot()shotA=false if shotGui then shotGui:Destroy()shotGui=nil end end
-	local bhA=false
-	local bhC
-	local function sBH()
-		if bhA then return end
-		bhA=true
-		bhC=R.Heartbeat:Connect(function()
-			local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-			if h and h.FloorMaterial~=Enum.Material.Air then h:ChangeState(Enum.HumanoidStateType.Jumping)end
-		end)
-	end
-	local function eBH()bhA=false if bhC then bhC:Disconnect()bhC=nil end end
-	local spdA=false
-	local function sSpd()
-		if spdA then return end spdA=true
-		local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-		if h then h.WalkSpeed=60 end
-	end
-	local function eSpd()
-		spdA=false
-		local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-		if h then h.WalkSpeed=16 end
-	end
-	local jmpA=false
-	local function sJmp()
-		if jmpA then return end jmpA=true
-		local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-			if c then for _,o in ipairs(c:GetDescendants())do if o:IsA("BasePart")then o.CanCollide=false end end end
-		end)
-	end
-	local function eNc()ncA=false if ncC then ncC:Disconnect()ncC=nil end end
-	local function sFl()
-		pc(function()loadstring(game:HttpGet(FLY_URL))()end)
-	end
-	local ijA=false
-	local ijC
-	local function sIJ()
-		if ijA then return end ijA=true
-		ijC=U.JumpRequest:Connect(function()
-			local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-			if h then h:ChangeState(Enum.HumanoidStateType.Jumping)end
-		end)
-	end
-	local function eIJ()ijA=false if ijC then ijC:Disconnect()ijC=nil end end
-	local glowA=false
-	local glowH
-	local function sGlow()
-		if glowA then return end glowA=true
-		local c=LP.Character
-		if not c then return end
-		glowH=Instance.new("Highlight",c)
-		glowH.FillColor=mainColor
-		glowH.OutlineTransparency=1
-		glowH.FillTransparency=0.7
-		glowH.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
-	end
-	local function eGlow()glowA=false if glowH then glowH:Destroy()glowH=nil end end
-	local fbA=false
-	local function sFb()
-		if fbA then return end fbA=true
-		pc(function()L.GlobalShadows=false L.FogEnd=1e6 L.FogStart=1e6 end)
-	end
-	local function eFb()fbA=false pc(function()L.GlobalShadows=true L.FogEnd=500 end)end
-	local nsA=false
-	local nsC
-	local function sNs()
-		if nsA then return end nsA=true
-		nsC=R.Stepped:Connect(function()
-			local c=LP.Character
-			if c then for _,o in ipairs(c:GetDescendants())do if o:IsA("BasePart")then o.Transparency=1 end end end
-		end)
-	end
-	local function eNs()
-		nsA=false
-		if nsC then nsC:Disconnect()nsC=nil end
-		local c=LP.Character
-		if c then for _,o in ipairs(c:GetDescendants())do if o:IsA("BasePart")then o.Transparency=0 end end end
-	end
-	local shA=false
-	local shD={}
-	local function sSh()
-		if shA then return end shA=true
-		pc(function()L.GlobalShadows=false end)
-		for _,o in ipairs(W:GetDescendants())do if o:IsA("BasePart")and o.CastShadow then shD[o]=true o.CastShadow=false end end
-	end
-	local function eSh()
-		shA=false
-		pc(function()L.GlobalShadows=true end)
-		for o in pairs(shD)do if o.Parent then o.CastShadow=true end end
-		shD={}
-	end
-	local paA=false
-	local paD={}
-	local function sPa()
-		if paA then return end paA=true
-		for _,o in ipairs(W:GetDescendants())do
-			if o:IsA("ParticleEmitter")then paD[o]={r=o.Rate}o.Rate=0
-			elseif o:IsA("Trail")or o:IsA("Beam")then paD[o]={e=o.Enabled}o.Enabled=false end
 		end
-	end
-	local function ePa()
-		paA=false
-		for o,d in pairs(paD)do
-			if o.Parent then
-				if d.r then o.Rate=d.r end
-				if d.e~=nil then o.Enabled=d.e end
-			end
-		end
-		paD={}
-	end
-	local function sTp()
-		local c=LP.Character
-		local r=c and c:FindFirstChild("HumanoidRootPart")
-		if r then r.CFrame=r.CFrame+Vector3.new(0,50,0)end
-	end
-	R.RenderStepped:Connect(function()
-		if not fbActive then return end
-		local cm=W.CurrentCamera
-		if not cm or not fbBV or not fbBG then return end
-		local d=Vector3.zero
-		if U:IsKeyDown(Enum.KeyCode.W)then d=d+cm.CFrame.LookVector end
-		if U:IsKeyDown(Enum.KeyCode.S)then d=d-cm.CFrame.LookVector end
-		if U:IsKeyDown(Enum.KeyCode.A)then d=d-cm.CFrame.RightVector end
-		if U:IsKeyDown(Enum.KeyCode.D)then d=d+cm.CFrame.RightVector end
-		if U:IsKeyDown(Enum.KeyCode.Space)then d=d+Vector3.new(0,1,0)end
-		if U:IsKeyDown(Enum.KeyCode.LeftControl)then d=d-Vector3.new(0,1,0)end
-		fbBV.Velocity=d.Magnitude>0 and d.Unit*150 or Vector3.zero
-		fbBG.CFrame=cm.CFrame
 	end)
-	local T1=makeTab("MM2",1)
+end
+local function eATP()atpA=false if atpC then atpC:Disconnect()atpC=nil end end
+local atmA=false
+local atmC
+local function sATM()
+	if atmA then return end
+	atmA=true
+	atmC=R.Heartbeat:Connect(function()
+		local murderer=getMurderer()
+		local mr=murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart")
+		local myRoot=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+		if mr and myRoot then myRoot.CFrame=CFrame.new(mr.Position+Vector3.new(0,0,3))end
+	end)
+end
+local function eATM()atmA=false if atmC then atmC:Disconnect()atmC=nil end end
+local shotA=false
+local shotGui=nil
+local lastShot=0
+local function makeShot()
+	if shotGui then shotGui:Destroy()end
+	shotGui=Instance.new("ScreenGui",pg)
+	shotGui.Name="ExodiumShot"shotGui.ResetOnSpawn=false shotGui.IgnoreGuiInset=true shotGui.DisplayOrder=200
+	local btn=Instance.new("TextButton",shotGui)
+	btn.Size=UDim2.new(0,60,0,60)btn.Position=UDim2.new(0.85,0,0.7,0)
+	btn.BackgroundColor3=Color3.fromRGB(20,15,30)btn.BorderSizePixel=0 btn.Text=""btn.AutoButtonColor=false
+	Instance.new("UICorner",btn).CornerRadius=UDim.new(0,10)
+	local stk=Instance.new("UIStroke",btn)stk.Color=mainColor stk.Thickness=2 stk.Transparency=0.2
+	local ic=Instance.new("TextLabel",btn)ic.Size=UDim2.new(1,0,1,0)ic.BackgroundTransparency=1 ic.Text="🔫"ic.TextScaled=true ic.Font=Enum.Font.GothamBold
+	local dg=false
+	local ds2,sp2
+	btn.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dg=true ds2=i.Position sp2=btn.Position end end)
+	U.InputChanged:Connect(function(i)if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then local d=i.Position-ds2 if math.abs(d.X)>5 or math.abs(d.Y)>5 then btn.Position=UDim2.new(sp2.X.Scale,sp2.X.Offset+d.X,sp2.Y.Scale,sp2.Y.Offset+d.Y)end end end)
+	U.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dg=false end end)
+	btn.MouseButton1Click:Connect(function()
+		if not shotA then return end
+		local now=tick()
+		if now-lastShot<SHOT_DELAY then return end
+		lastShot=now
+		T:Create(btn,TweenInfo.new(0.1),{BackgroundColor3=mainColor}):Play()
+		task.wait(0.15)
+		T:Create(btn,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(20,15,30)}):Play()
+		local myChar=LP.Character
+		if not myChar then return end
+		local gun=myChar:FindFirstChild("Gun")
+		if not gun then local bp=LP:FindFirstChild("Backpack")if bp then gun=bp:FindFirstChild("Gun")end end
+		if gun then pc(function()gun:Activate()end)end
+	end)
+end
+local function sShot()if shotA then return end shotA=true makeShot()end
+local function eShot()shotA=false if shotGui then shotGui:Destroy()shotGui=nil end endlocal bhA=false
+local bhC
+local function sBH()
+	if bhA then return end
+	bhA=true
+	bhC=R.Heartbeat:Connect(function()
+		local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+		if h and h.FloorMaterial~=Enum.Material.Air then h:ChangeState(Enum.HumanoidStateType.Jumping)end
+	end)
+end
+local function eBH()bhA=false if bhC then bhC:Disconnect()bhC=nil end end
+local spdA=false
+local function sSpd()
+	if spdA then return end spdA=true
+	local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if h then h.WalkSpeed=60 end
+end
+local function eSpd()
+	spdA=false
+	local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if h then h.WalkSpeed=16 end
+end
+local jmpA=false
+local function sJmp()
+	if jmpA then return end jmpA=true
+	local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if h then h.UseJumpPower=true h.JumpPower=120 end
+end
+local function eJmp()
+	jmpA=false
+	local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if h then h.JumpPower=50 end
+end
+local ncA=false
+local ncC
+local function sNc()
+	if ncA then return end ncA=true
+	ncC=R.Stepped:Connect(function()
+		local c=LP.Character
+		if c then for _,o in ipairs(c:GetDescendants())do if o:IsA("BasePart")then o.CanCollide=false end end end
+	end)
+end
+local function eNc()ncA=false if ncC then ncC:Disconnect()ncC=nil end end
+local flA=false
+local flBV,flBG
+local function sFl()
+	if flA then return end
+	flA=true
+	local r=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	if not r then return end
+	flBV=Instance.new("BodyVelocity",r)
+	flBV.MaxForce=Vector3.new(1e5,1e5,1e5)
+	flBV.Velocity=Vector3.zero
+	flBG=Instance.new("BodyGyro",r)
+	flBG.MaxTorque=Vector3.new(1e5,1e5,1e5)
+	flBG.P=1000
+	flBG.D=50
+end
+local function eFl()
+	flA=false
+	if flBV then flBV:Destroy()flBV=nil end
+	if flBG then flBG:Destroy()flBG=nil end
+end
+R.RenderStepped:Connect(function()
+	if not flA or not flBV or not flBG then return end
+	local cm=W.CurrentCamera
+	if not cm then return end
+	local d=Vector3.zero
+	if U:IsKeyDown(Enum.KeyCode.W)then d=d+cm.CFrame.LookVector end
+	if U:IsKeyDown(Enum.KeyCode.S)then d=d-cm.CFrame.LookVector end
+	if U:IsKeyDown(Enum.KeyCode.A)then d=d-cm.CFrame.RightVector end
+	if U:IsKeyDown(Enum.KeyCode.D)then d=d+cm.CFrame.RightVector end
+	if U:IsKeyDown(Enum.KeyCode.Space)then d=d+Vector3.new(0,1,0)end
+	if U:IsKeyDown(Enum.KeyCode.LeftControl)then d=d-Vector3.new(0,1,0)end
+	flBV.Velocity=d.Magnitude>0 and d.Unit*150 or Vector3.zero
+	flBG.CFrame=cm.CFrame
+end)
+local ijA=false
+local ijC
+local function sIJ()
+	if ijA then return end ijA=true
+	ijC=U.JumpRequest:Connect(function()
+		local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+		if h then h:ChangeState(Enum.HumanoidStateType.Jumping)end
+	end)
+end
+local function eIJ()ijA=false if ijC then ijC:Disconnect()ijC=nil end end
+local glowA=false
+local glowH
+local function sGlow()
+	if glowA then return end glowA=true
+	local c=LP.Character
+	if not c then return end
+	glowH=Instance.new("Highlight",c)
+	glowH.FillColor=mainColor
+	glowH.OutlineTransparency=1
+	glowH.FillTransparency=0.7
+	glowH.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+end
+local function eGlow()glowA=false if glowH then glowH:Destroy()glowH=nil end end
+local fbA=false
+local function sFb()
+	if fbA then return end fbA=true
+	pc(function()L.GlobalShadows=false L.FogEnd=1e6 L.FogStart=1e6 end)
+end
+local function eFb()fbA=false pc(function()L.GlobalShadows=true L.FogEnd=500 end)end
+local nsA=false
+local nsC
+local function sNs()
+	if nsA then return end nsA=true
+	nsC=R.Stepped:Connect(function()
+		local c=LP.Character
+		if c then for _,o in ipairs(c:GetDescendants())do if o:IsA("BasePart")then o.Transparency=1 end end end
+	end)
+end
+local function eNs()
+	nsA=false
+	if nsC then nsC:Disconnect()nsC=nil end
+	local c=LP.Character
+	if c then for _,o in ipairs(c:GetDescendants())do if o:IsA("BasePart")then o.Transparency=0 end end end
+end
+local shA=false
+local shD={}
+local function sSh()
+	if shA then return end shA=true
+	pc(function()L.GlobalShadows=false end)
+	for _,o in ipairs(W:GetDescendants())do if o:IsA("BasePart")and o.CastShadow then shD[o]=true o.CastShadow=false end end
+end
+local function eSh()
+	shA=false
+	pc(function()L.GlobalShadows=true end)
+	for o in pairs(shD)do if o.Parent then o.CastShadow=true end end
+	shD={}
+end
+local paA=false
+local paD={}
+local function sPa()
+	if paA then return end paA=true
+	for _,o in ipairs(W:GetDescendants())do
+		if o:IsA("ParticleEmitter")then paD[o]={r=o.Rate}o.Rate=0
+		elseif o:IsA("Trail")or o:IsA("Beam")then paD[o]={e=o.Enabled}o.Enabled=false end
+	end
+end
+local function ePa()
+	paA=false
+	for o,d in pairs(paD)do
+		if o.Parent then
+			if d.r then o.Rate=d.r end
+			if d.e~=nil then o.Enabled=d.e end
+		end
+	end
+	paD={}
+end
+local function sTp()
+	local c=LP.Character
+	local r=c and c:FindFirstChild("HumanoidRootPart")
+	if r then r.CFrame=r.CFrame+Vector3.new(0,50,0)end
+			end	local T1=makeTab("MM2",1)
 	mkSec("MM2",0,mainColor,T1)
 	mkToggle("MM2 ESP (роли)",1,sMM2,eMM2,T1)
 	mkToggle("Anti-Aim 100",2,sAA,eAA,T1)
@@ -513,7 +537,7 @@ local function buildMenu(mode)
 	mkToggle("Скорость x4",1,sSpd,eSpd,T2)
 	mkToggle("Высокий прыжок",2,sJmp,eJmp,T2)
 	mkToggle("Noclip",3,sNc,eNc,T2)
-	mkBtn("Fly",4,sFl,T2)
+	mkToggle("Fly",4,sFl,eFl,T2)
 	mkToggle("BunnyHop",5,sBH,eBH,T2)
 	mkToggle("Беск. прыжок",6,sIJ,eIJ,T2)
 	mkBtn("Телепорт вверх",7,sTp,T2)
@@ -605,21 +629,13 @@ local function buildMenu(mode)
 		end,T7)
 		local T8=makeTab("FLY+",8)
 		mkSec("FLY+",0,mainColor,T8)
-		mkToggle("Fly встроенный",1,function()
-			local r=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-			if not r then return end
-			fbBV=Instance.new("BodyVelocity",r)
-			fbBV.MaxForce=Vector3.new(1e5,1e5,1e5)
-			fbBV.Velocity=Vector3.zero
-			fbBG=Instance.new("BodyGyro",r)
-			fbBG.MaxTorque=Vector3.new(1e5,1e5,1e5)
-			fbBG.P=1000
-			fbBG.D=50
-			fbActive=true
+		mkToggle("Speed Boost",1,function()
+			sbC=R.Heartbeat:Connect(function()
+				local h=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+				if h then h.WalkSpeed=120 end
+			end)
 		end,function()
-			fbActive=false
-			if fbBV then fbBV:Destroy()fbBV=nil end
-			if fbBG then fbBG:Destroy()fbBG=nil end
+			if sbC then sbC:Disconnect()sbC=nil end
 		end,T8)
 	end
 	for i=1,#tabContents do
@@ -630,8 +646,6 @@ local function buildMenu(mode)
 		end
 	end
 end
-
 VExtBtn.MouseButton1Click:Connect(function()buildMenu("external")end)
 VIntBtn.MouseButton1Click:Connect(function()buildMenu("internal")end)
-
 print("✅ EXODIUM HUB загружено")
